@@ -1,1 +1,1 @@
-+ MAYAVERSION:2026 PIK_maya_anim_sequencer 0.0.2 ..\PIK_maya_anim_sequencer
++ MAYAVERSION:2026 PIK_maya_anim_sequencer 0.0.1 ..\PIK_maya_anim_sequencer

@@ -21,8 +21,7 @@ def create_sequencer_camera(
     """
     # Create a camera and get the shape name.
     camera = cmds.camera(n=camera_name)
-    camera_transform = camera[0]
-    camera_shape = camera[1]
+    camera_transform, camera_shape = camera
     camera_transform = cmds.rename(camera_transform, camera_name, ignoreShape=True)
 
     if preview_camera:
