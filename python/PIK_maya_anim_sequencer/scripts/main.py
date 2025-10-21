@@ -46,6 +46,29 @@ def snap_preview_camera_to_shot_camera(current_time: OpenMaya.MTime, client_data
                 force=True,
             )
 
+            # Constrain the DOF
+            shot_cam_shape = cmds.listRelatives(shot.cam, shapes=True)[0]
+            cmds.connectAttr(
+                f"{shot_cam_shape}.depthOfField",
+                f"{preview_camera_shape}.depthOfField",
+                force=True,
+            )
+            cmds.connectAttr(
+                f"{shot_cam_shape}.focusDistance",
+                f"{preview_camera_shape}.focusDistance",
+                force=True,
+            )
+            cmds.connectAttr(
+                f"{shot_cam_shape}.fStop",
+                f"{preview_camera_shape}.fStop",
+                force=True,
+            )
+            cmds.connectAttr(
+                f"{shot_cam_shape}.focusRegionScale",
+                f"{preview_camera_shape}.focusRegionScale",
+                force=True,
+            )
+
 
 def setup_preview_camera() -> int:
     """This function setup a Maya callback so

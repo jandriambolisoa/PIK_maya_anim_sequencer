@@ -1,5 +1,6 @@
 import os
 
+from maya import cmds
 from maya import OpenMayaUI
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin
 
@@ -21,6 +22,7 @@ from PIK_maya_anim_sequencer.scripts.shots import (
     create_shot,
     generate_shot_name,
     defocus,
+    get_all_shots,
     get_active_shot,
     export_shots,
     extra_defocus,
@@ -32,8 +34,8 @@ from PIK_maya_anim_sequencer.scripts.cameras import (
     create_sequencer_camera,
     generate_camera_name,
 )
+from quickBlast.settings import get_quickblast_folderpath
 from quickBlast.main import run as quickBlast
-
 
 class Backend(QObject):
     def __init__(self):
@@ -95,7 +97,21 @@ class Backend(QObject):
 
     @Slot()
     def playblast(self):
-        quickBlast()
+        # Playblast shots individually with quickBlast
+        all_shots = get_all_shots()
+        folderpath = get_quickblast_folderpath()
+        first_shot = True
+        for shot in all_shots:
+            shot.focus()
+            # Run a regular quickBlast at first, then ignore whether the file is not saved
+            # as quickBlast modify the file and the user cannot save in between those operations.
+            if first_shot:
+                first_shot = False
+            else:
+                cmds.file(modified=False)
+            quickBlast(show_output = False, custom_filepath = os.path.join(folderpath, f"{shot.name}.mp4"), show_popup_errors = False)
+
+        os.startfile(folderpath)
 
     @Slot()
     def export_sequence_datas(self):
