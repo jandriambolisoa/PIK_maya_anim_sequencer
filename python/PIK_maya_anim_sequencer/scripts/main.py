@@ -1,76 +1,37 @@
 from maya import cmds
-from maya import OpenMaya
+from maya import OpenMaya, OpenMayaAnim
 
-from PIK_maya_anim_sequencer.scripts.cameras import (
-    get_preview_camera,
-)
-from PIK_maya_anim_sequencer.scripts.shots import (
-    get_active_shot,
-)
+from PIK_maya_anim_sequencer.scripts.constants import PREVIEW_CAMERA_NAME
 from PIK_maya_anim_sequencer.ui.sequencer import run as sequencer_ui
 
-callbacks = []
+from PIK_maya_anim_sequencer.scripts.sequence import get_sequencer_sequence
+from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
+
+callbacks = list()
 
 
-def snap_preview_camera_to_shot_camera(current_time: OpenMaya.MTime, client_data=None):
-    """This function takes the preview camera and snap
-    it to the active shot camera (postition, rotation,
-    focal length).
-    """
-    preview_camera = get_preview_camera()
-    preview_camera_transform = preview_camera[0]
-    preview_camera_shape = preview_camera[1]
-    current_cam = cmds.getAttr(f"{preview_camera_transform}.currentCam")
+def update_preview_viewport_camera(current_time: OpenMaya.MTime, clientData):
+    sequencer_sequence = clientData
+    shots = sequencer_sequence.get_shots_at_time(current_time.value())
 
-    shot = get_active_shot()
-
-    if shot:
-        if shot.cam != current_cam:
-            # Constrain the position and rotation
-            constraint = cmds.listRelatives(
-                preview_camera_transform, type="parentConstraint"
-            )
-            if constraint:
-                cmds.delete(constraint[0])
-            cmds.setAttr(
-                f"{preview_camera_transform}.currentCam", shot.cam, type="string"
-            )
-            cmds.matchTransform(preview_camera_transform, shot.cam)
-            cmds.parentConstraint(shot.cam, preview_camera_transform)
-
-            # Constrain the focal length
-            shot_cam_shape = cmds.listRelatives(shot.cam, shapes=True)[0]
-            cmds.connectAttr(
-                f"{shot_cam_shape}.focalLength",
-                f"{preview_camera_shape}.focalLength",
-                force=True,
-            )
-
-            # Constrain the DOF
-            shot_cam_shape = cmds.listRelatives(shot.cam, shapes=True)[0]
-            cmds.connectAttr(
-                f"{shot_cam_shape}.depthOfField",
-                f"{preview_camera_shape}.depthOfField",
-                force=True,
-            )
-            cmds.connectAttr(
-                f"{shot_cam_shape}.focusDistance",
-                f"{preview_camera_shape}.focusDistance",
-                force=True,
-            )
-            cmds.connectAttr(
-                f"{shot_cam_shape}.fStop",
-                f"{preview_camera_shape}.fStop",
-                force=True,
-            )
-            cmds.connectAttr(
-                f"{shot_cam_shape}.focusRegionScale",
-                f"{preview_camera_shape}.focusRegionScale",
-                force=True,
-            )
+    if shots and sequencer_sequence.preview_viewport:
+        shot = shots[0]
+        if shot.cam.shape != cmds.modelEditor(
+            sequencer_sequence.preview_viewport, query=True, camera=True
+        ):
+            shot.cam.set_as_camera_viewport(sequencer_sequence.preview_viewport)
 
 
-def setup_preview_camera() -> int:
+def update_shots_start_and_stop_datas(current_time: OpenMaya.MTime, clientData):
+    # When dragging a bookmark in the time slider to change its length
+    # or its time placement, Maya does not consider this as a
+    # scrubbing action.
+    sequencer_sequence = clientData
+    if not OpenMayaAnim.MAnimControl.isScrubbing():
+        sequencer_sequence.update_range_of_shots()
+
+
+def setup_preview_viewport(clientData=None) -> int:
     """This function setup a Maya callback so
     that everytime the time is updated, the
     preview camera will find the right camera
@@ -80,19 +41,80 @@ def setup_preview_camera() -> int:
         int: The ID of the callback.
     """
     callback_id = OpenMaya.MDGMessage.addTimeChangeCallback(
-        snap_preview_camera_to_shot_camera
+        update_preview_viewport_camera, clientData
     )
+    return callback_id
 
+
+def setup_shot_length_updater(clientData=None) -> int:
+    callback_id = OpenMaya.MDGMessage.addTimeChangeCallback(
+        update_shots_start_and_stop_datas, clientData
+    )
+    return callback_id
+
+
+def setup_sequence_reset_if_scene_open(clientData=None) -> int:
+    callback_id = OpenMaya.MSceneMessage.addCallback(
+        OpenMaya.MSceneMessage.kBeforeOpen, close_sequencer, clientData
+    )
+    return callback_id
+
+
+def setup_sequence_reset_if_new_scene(clientData=None) -> int:
+    callback_id = OpenMaya.MSceneMessage.addCallback(
+        OpenMaya.MSceneMessage.kBeforeNew, close_sequencer, clientData
+    )
     return callback_id
 
 
 def run():
     """Runs the PIK_maya_anim_sequencer.
     Displays the UI and add callbacks."""
-    sequencer_ui()
-    callbacks.append(setup_preview_camera())
+    if callbacks:
+        remove_callbacks()
+
+    sequencer_sequence = get_sequencer_sequence(reset=True)
+    sequencer_sequence.preview_viewport = sequencer_sequence.create_preview_viewport()
+
+    # Display UI and dock controls to preview viewport
+    window = sequencer_ui()
+    try:
+        preview_viewport_control = cmds.modelPanel(
+            sequencer_sequence.preview_viewport, query=True, control=True
+        )
+        if preview_viewport_control:
+            preview_viewport_control = preview_viewport_control.split("|")[0]
+            cmds.workspaceControl(
+                window, edit=True, dockToControl=(preview_viewport_control, "bottom")
+            )
+    except RuntimeError:
+        # If the viewport is already docked, Maya will raise an error.
+        pass
+
+    # Add callbacks
+    callbacks.append(setup_preview_viewport(clientData=sequencer_sequence))
+    callbacks.append(setup_shot_length_updater(clientData=sequencer_sequence))
+    callbacks.append(setup_sequence_reset_if_scene_open(clientData=window))
+    callbacks.append(setup_sequence_reset_if_new_scene(clientData=window))
 
 
-def close():
+def close_sequencer(clientData):
+    remove_callbacks()
+
+    window = clientData
+    cmds.workspaceControl(window, edit=True, close=True)
+
+    sequencer_sequence = get_sequencer_sequence()
+    preview_viewport_control = cmds.modelPanel(
+        sequencer_sequence.preview_viewport, query=True, control=True
+    )
+    if preview_viewport_control:
+        preview_viewport_control = preview_viewport_control.split("|")[0]
+        cmds.workspaceControl(preview_viewport_control, edit=True, close=True)
+
+
+def remove_callbacks():
     """Remove sequencer's related callbacks."""
-    OpenMaya.MDGMessage.removeCallbacks(callbacks)
+    for callback_id in callbacks:
+        OpenMaya.MDGMessage.removeCallback(callback_id)
+    callbacks.clear()

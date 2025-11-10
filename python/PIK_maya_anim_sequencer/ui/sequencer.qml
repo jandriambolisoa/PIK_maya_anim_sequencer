@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Controls.Fusion
-import "widgets" as Custom
 
 Page {
     id: sequencerWindow
@@ -35,7 +34,7 @@ Page {
         anchors.margins: 6
         
         GridLayout {
-            columns: 2
+            columns: 6
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignLeft
             Layout.maximumWidth: 100
@@ -55,7 +54,7 @@ Page {
                 ToolTip.visible: hovered
                 ToolTip.text: "Create Shot"
                 onClicked: {
-                    createShotWidget.open()
+                    backend.open_create_shot_dialog()
                 }
             }
 
@@ -106,7 +105,7 @@ Page {
                     anchors.margins: 6
                 }
                 ToolTip.visible: hovered
-                ToolTip.text: "Overview sequence"
+                ToolTip.text: "Defocus"
                 onClicked: backend.defocus_active_shot()
             }
 
@@ -251,7 +250,7 @@ Page {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignLeft
-                implicitWidth: 128
+                implicitWidth: 1
             }
         }
         Item {
@@ -260,13 +259,5 @@ Page {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignLeft
         }
-    }
-
-    Custom.CreateShot {
-        id: createShotWidget
-        x: (parent.width/2)-(createShotWidget.width/2)
-        y: (parent.height/2)-(createShotWidget.height/2)
-        implicitWidth: parent.width * 0.88
-        implicitHeight: parent.height * 0.88
     }
 }
