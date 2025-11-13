@@ -12,6 +12,11 @@ from quickBlast.main import run as quickBlast
 
 
 def run():
+    """
+    Run the sequencer UI.
+    Returns:
+        None
+    """
     folderpath = os.path.dirname(__file__)
     qml_url = os.path.join(folderpath, "sequencer.qml")
     width = 560

@@ -6,10 +6,12 @@ from maya import OpenMaya
 from maya.plugin.timeSliderBookmark import timeSliderBookmark
 
 from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
+from PIK_maya_anim_sequencer.scripts.constants import EXPORT_OVERSCAN, DEFAULT_OVERSCAN
 from PIK_maya_anim_sequencer.scripts.dependencies import valid_shot_name
 
 from quickBlast.settings import get_quickblast_folderpath
 from quickBlast.main import run as quickBlast
+
 
 
 class SequencerShot:
@@ -28,6 +30,14 @@ class SequencerShot:
 
     @classmethod
     def get(cls, node: str):
+        """
+        Get a Sequencer Shot object from a shot name or a bookmark name.
+        Args:
+            node (str): The shot name or bookmark name
+
+        Returns:
+            :class:`SequencerShot`: A class instance.
+        """
         if node in cmds.ls(exactType="timeSliderBookmark"):
             return cls(node)
         elif node in [
@@ -40,6 +50,16 @@ class SequencerShot:
 
     @classmethod
     def create(cls, shot_name: str, color: tuple, shot_length: int):
+        """
+        Create a Sequencer Shot object.
+        Args:
+            shot_name (str): The name of the shot.
+            color (tuple): The color of the shot.
+            shot_length (int): The length of the shot.
+
+        Returns:
+            :class:`SequencerShot`: A class instance.
+        """
         shot_name = valid_shot_name(shot_name)
 
         if cls.get(f"bookmark_{shot_name}"):
@@ -56,6 +76,14 @@ class SequencerShot:
         return cls(node)
 
     def rename(self, shot_name: str):
+        """
+        Rename the shot.
+        Args:
+            shot_name: The new name of the shot.
+
+        Returns:
+            None
+        """
         shot_name = valid_shot_name(shot_name)
 
         if self.get(f"bookmark_{shot_name}"):
@@ -68,17 +96,26 @@ class SequencerShot:
         self.cam = SequencerCamera.get(self.name)
 
     def delete(self):
+        """
+        Delete the shot.
+
+        Returns:
+            None
+        """
         cmds.delete(self.cam.transform)  # camera
         cmds.delete(self.node)  # bookmark
 
     def move(self, offset: int, move_bookmark: bool = True, move_camera: bool = True):
-        """Move the shot in time. Use move_bookmark or move_camera args
-        to independetly move the bookmark or the camera.
-
+        """
+        Move the shot in time. Use move_bookmark or move_camera args
+        to independently move the bookmark or the camera.
         Args:
             offset (int): The number of frame it has to move.
             move_bookmark (bool, optional): Move the bookmark. Defaults to True.
             move_camera (bool, optional): Move the camera. Defaults to True.
+
+        Returns:
+            None
         """
         if move_bookmark:
             cmds.setAttr(f"{self.node}.timeRangeStart", self.start + offset)
@@ -91,25 +128,42 @@ class SequencerShot:
             self.cam.move(offset)
 
     def offset_end_frame(self, offset: int):
-        """Offset the stop frame of the bookmark.
-
+        """
+        Offset the stop frame of the bookmark.
         Args:
             offset (int): The amount of offset.
+
+        Returns:
+            None
         """
         cmds.setAttr(f"{self.node}.timeRangeStop", self.stop + offset)
         self.stop = cmds.getAttr(f"{self.node}.timeRangeStop")
 
     def focus(self):
-        """Update Maya playback range to frame this shot."""
+        """
+        Update Maya playback range to frame this shot.
+
+        Returns:
+            None
+        """
         cmds.playbackOptions(edit=True, min=self.start, max=self.stop)
 
     def export_playblast(self, show_output=False, show_popup_errors=False):
-        """Export Maya playblast."""
+        """
+        Export a playblast of this shot.
+        Args:
+            show_output (bool): If true, show the output folder of the playblast.
+            show_popup_errors (bool): If true, show popup error message if any.
+
+        Returns:
+            None
+        """
         orig_min_time_slider = cmds.playbackOptions(query=True, min=True)
         orig_max_time_slider = cmds.playbackOptions(query=True, max=True)
 
         folder_path = get_quickblast_folderpath()
         self.focus()
+        self.cam.set_attr("overscan", EXPORT_OVERSCAN)
         self.cam.set_attr("displayResolution", 0)
         cmds.file(modified=False)
         quickBlast(
@@ -117,6 +171,7 @@ class SequencerShot:
             custom_filepath=os.path.join(folder_path, f"{self.name}.mp4"),
             show_popup_errors=show_popup_errors,
         )
+        self.cam.set_attr("overscan", DEFAULT_OVERSCAN)
         self.cam.set_attr("displayResolution", 1)
 
         cmds.playbackOptions(
@@ -124,14 +179,24 @@ class SequencerShot:
         )
 
     def export_camera(self, folder_path: str, show_output=False):
-        """Export this shot camera as a maya ASCII file."""
+        """
+        Export this shot camera as a maya ASCII file.
+        Args:
+            folder_path (str): The folder path of the export.
+            show_output (bool): If true, show the output folder.
+
+        Returns:
+            None
+        """
         cmds.select(self.cam.transform, replace=True)
+        self.cam.set_attr("overscan", EXPORT_OVERSCAN)
         cmds.file(
             os.path.join(folder_path, self.name + ".ma"),
             exportSelected=True,
             type="mayaAscii",
             force=True,
         )
+        self.cam.set_attr("overscan", DEFAULT_OVERSCAN)
         if show_output:
             os.startfile(folder_path)
 
@@ -142,7 +207,7 @@ class SequencerShot:
         {
             "name": "SQ0020_SH0010",
             "sequence": "SQ0020",
-            "shot": SH0010,
+            "shot": "SH0010",
             "length": 24,
             "start": 1001,
             "stop": 1025,
@@ -152,10 +217,10 @@ class SequencerShot:
                 0.0
             ]
         }
+
         Returns:
             A dictionary.
         """
-
         sequence, shot = self.name.split("_")
         length = self.stop - self.start
         return {

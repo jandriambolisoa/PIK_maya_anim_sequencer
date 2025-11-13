@@ -8,7 +8,6 @@ from PIK_maya_anim_sequencer.scripts.constants import (
     DEFAULT_OVERSCAN,
 )
 
-
 class SequencerCamera:
     """
     A camera object in the sequencer tool.
@@ -19,34 +18,14 @@ class SequencerCamera:
         self.shape = shape
 
     @classmethod
-    def get(cls, transform_name: str):
-        """
-        Get a camera from its transform name.
-        Args:
-            transform_name: the name of the camera (transform)
-
-        Returns:
-            A SequencerCamera object
-        """
-        camera_shape = cmds.ls(transform_name + "|*", type="camera", l=True)
-
-        if camera_shape:
-            return cls(
-                transform=cmds.listRelatives(camera_shape[0], parent=True, f=True)[0],
-                shape=camera_shape[0],
-            )
-        else:
-            return None
-
-    @classmethod
     def create(cls, name: str):
         """
         Create a sequencer camera.
         Args:
-            name: The name of the camera
+            name (str): The name of the camera
 
         Returns:
-            A SequencerCamera object
+            :class:`SequencerCamera`: A class instance.
         """
         if cls.get(name):
             raise RuntimeError(f"Camera {name} already exists")
@@ -71,7 +50,38 @@ class SequencerCamera:
 
         return cls(transform, shape)
 
-    def get_attr(self, attr: str):
+    @classmethod
+    def get(cls, transform_name: str):
+        """
+        Get a camera from its transform name.
+        Args:
+            transform_name (str): the name of the camera transform
+
+        Returns:
+            :class:`SequencerCamera`: A class instance.
+        """
+        camera_shape = cmds.ls(transform_name + "|*", type="camera", l=True)
+
+        if camera_shape:
+            return cls(
+                transform=cmds.listRelatives(camera_shape[0], parent=True, f=True)[0],
+                shape=camera_shape[0],
+            )
+        else:
+            return None
+
+
+    def get_attr(self, attr: str) -> any:
+        """
+        Return the value of a camera's attribute.
+        This function will look for a shape's attribute, if not existing,
+        it will look for a transform's attribute.
+        Args:
+            attr (str): the name of the attribute
+
+        Returns:
+            any: the value of the attribute or None if the attribute isn't found.
+        """
         shape_attr = cmds.listAttr(self.shape)
         transform_attr = cmds.listAttr(self.transform)
         if attr in shape_attr:
@@ -82,6 +92,15 @@ class SequencerCamera:
             return None
 
     def set_attr(self, attr: str, value) -> None:
+        """
+        Set the value of a camera's attribute if it exists.
+        Args:
+            attr (str): the name of the attribute
+            value (any): the value of the attribute
+
+        Returns:
+            None
+        """
         shape_attr = cmds.listAttr(self.shape)
         transform_attr = cmds.listAttr(self.transform)
         if attr in shape_attr:
@@ -93,7 +112,7 @@ class SequencerCamera:
         """
         Move the camera in time
         Args:
-            offset: The amount of time unit to move.
+            offset (int): The amount of time unit to move.
 
         Returns:
             None
@@ -104,7 +123,7 @@ class SequencerCamera:
         """
         Snap camera to another camera (including position, rotation, focal length and DOF attributes).
         Args:
-            camera_to_snap_to: A camera transform name
+            camera_to_snap_to (str): A camera transform name
 
         Returns:
             None
@@ -128,7 +147,7 @@ class SequencerCamera:
         """
         Set this camera as the viewport's camera.
         Args:
-            panel: The model panel (viewport) to edit
+            panel (str): The model panel (viewport) to edit
 
         Returns:
             None
@@ -140,14 +159,9 @@ def get_all_cameras():
     """
     Return all cameras as a list of SequencerCamera objects
     Returns:
-        list[SequencerCamera]
+        list[:class:`SequencerCamera`] : List of class instances for all the cameras in the scene.
     """
-    camera_shapes = [shape for shape in cmds.ls(cameras=True)]
-    cameras = list()
-    for shape in camera_shapes:
-        cameras.append(
-            SequencerCamera(
-                transform=cmds.listRelatives(shape, parent=True)[0], shape=shape
-            )
-        )
-    return cameras
+    return [
+        SequencerCamera.get(cmds.listRelatives(shape, parent=True)[0])
+        for shape in cmds.ls(cameras=True)
+    ]

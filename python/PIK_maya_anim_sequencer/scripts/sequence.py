@@ -31,7 +31,7 @@ class SequencerSequence:
         """
         Load the sequencer sequence from the opened scene.
         Returns:
-            An instance of SequencerSequence.
+            :class:`SequencerSequence`: A class instance.
         """
         seq = cls("SQ0010")
 
@@ -51,9 +51,22 @@ class SequencerSequence:
         return seq
 
     def sort_shots(self):
+        """
+        Sort the shots in the sequence.
+        Returns:
+            None
+        """
         self.shots = [shot for shot in sorted(self.shots, key=lambda item: item.start)]
 
     def get_shots_at_time(self, time: int):
+        """
+        Get the shots at the given time.
+        Args:
+            time (int): The time to get the shots at.
+
+        Returns:
+            list[:class:`SequencerShot`]: Shots at the given time.
+        """
         shot_list = list()
         for shot in self.shots:
             if shot.start <= time <= shot.stop:
@@ -62,25 +75,29 @@ class SequencerSequence:
         return shot_list
 
     def delete_shot_at_time(self, time: int):
-        active_shot = self.get_shots_at_time(time)[0]
-        if not active_shot:
-            OpenMaya.MGlobal.displayWarning("Sequencer: No active shot detected.")
-            return
+        """
+        Delete the shot at the given time.
+        Args:
+            time (int): The time to delete the shot at.
 
-        confirmation = cmds.confirmDialog(
-            title="Confirm",
-            message=f"Do you want to delete current shot?\n{active_shot.name}",
-            button=["Yes", "No"],
-            defaultButton="No",
-            cancelButton="No",
-            dismissString="No",
-        )
-        if confirmation == "Yes":
-            self.shots.remove(active_shot)
-            active_shot.delete()
-            del active_shot
+        Returns:
+            None
+        """
+        active_shot = self.get_shots_at_time(time)[0]
+        self.shots.remove(active_shot)
+        active_shot.delete()
+        del active_shot
+
 
     def get_previous_shots_at_time(self, time: int):
+        """
+        Get the shots before the given time.
+        Args:
+            time (int): The time to get the shots at.
+
+        Returns:
+            list[:class:`SequencerShot`]: Shots at the given time.
+        """
         shot_list = list()
         for shot in self.shots:
             if shot.stop < time:
@@ -89,6 +106,14 @@ class SequencerSequence:
         return shot_list
 
     def get_next_shots_at_time(self, time: int):
+        """
+        Get the shots after the given time.
+        Args:
+            time (int): The time to get the shots at.
+
+        Returns:
+            list[:class:`SequencerShot`]: Shots at the given time.
+        """
         shot_list = list()
         for shot in self.shots:
             if shot.start > time:
@@ -97,6 +122,14 @@ class SequencerSequence:
         return shot_list
 
     def update_range_of_shot_at_time(self, time: int) -> None:
+        """
+        Update the range of the shot at the given time.
+        Args:
+            time (int): The time to get the shots at.
+
+        Returns:
+            None
+        """
         shots = self.get_shots_at_time(time)
         if shots:
             for shot in shots:
@@ -106,6 +139,12 @@ class SequencerSequence:
         self.sort_shots()
 
     def update_range_of_shots(self):
+        """
+        Update the range of the shots.
+
+        Returns:
+            None
+        """
         for shot in self.shots:
             shot.start = cmds.getAttr(f"{shot.node}.timeRangeStart")
             shot.stop = cmds.getAttr(f"{shot.node}.timeRangeStop")
@@ -113,12 +152,18 @@ class SequencerSequence:
 
     @staticmethod
     def defocus():
-        """Reset the playback range to see all shots."""
+        """
+        Reset the playback range to see all shots.
+
+        Returns:
+            None
+        """
         timeSliderBookmark.frameAllBookmark()
 
     @staticmethod
     def extra_defocus(defocus_amount: int = 24):
-        """Extend the playback range by defocus_amount frames.
+        """
+        Extend the playback range by defocus_amount frames.
 
         Args:
             defocus_amount (int, optional): The number of frame to add at each end of the playback range. Defaults to 24.
@@ -129,13 +174,14 @@ class SequencerSequence:
         cmds.playbackOptions(maxTime=int(current_stop) + defocus_amount)
 
     def is_sequence_focus(self) -> bool:
-        """Return True if a sequence is actually in focus.
+        """
+        Return True if a sequence is actually in focus.
         A focus means that the start and the end of a shot
         (or all the shots for a sequence) match the
         current playback range min and max values.
 
         Returns:
-            bool: Sequence focus.
+            bool: is current Sequence focus.
         """
         current_start = cmds.playbackOptions(query=True, minTime=True)
         current_stop = cmds.playbackOptions(query=True, maxTime=True)
@@ -145,13 +191,16 @@ class SequencerSequence:
         return False
 
     def is_shot_focus_at_time(self, time: int) -> bool:
-        """Return True if the active shot is in focus.
+        """
+        Return True if the shot at a given time is in focus.
         A focus means that the start and the end of a shot
         (or all the shots for a sequence) match the
         current playback range min and max values.
+        Args:
+            time (int): The time to get the shots at.
 
         Returns:
-            bool: Active shot focus.
+            bool: is shot at a given time focus.
         """
         current_start = cmds.playbackOptions(query=True, minTime=True)
         current_stop = cmds.playbackOptions(query=True, maxTime=True)
@@ -163,14 +212,15 @@ class SequencerSequence:
         return False
 
     def is_sequence_fully_defocus(self) -> bool:
-        """Returns True if the playback range contains all
+        """
+        Returns True if the playback range contains all
         shots and does not focus the sequence.
         A focus means that the start and the end of a shot
         (or all the shots for a sequence) match the
         current playback range min and max values.
 
         Returns:
-            bool: The playback range contains all shots and does not focus the sequence
+            bool: is the playback range contains all shots and does not focus the sequence
         """
         current_start = cmds.playbackOptions(query=True, minTime=True)
         current_stop = cmds.playbackOptions(query=True, maxTime=True)
@@ -181,11 +231,33 @@ class SequencerSequence:
         return False
 
     def focus_next_at_time(self, time: int):
-        """Focus the next bookmark."""
-        timeSliderBookmark.frameNextBookmarkAtCurrentTime()
+        """
+        Focus the shot coming after the shot at a given time.
+        Args:
+            time (int): The time to get the shot at.
+
+        Returns:
+            None
+        """
+        # Maya default function comes back at the first bookmark when calling it while
+        # being at the last bookmark, which might be confusing.
+        # timeSliderBookmark.frameNextBookmarkAtCurrentTime()
+
+        next_shots = self.get_next_shots_at_time(time)
+        if next_shots:
+            cmds.playbackOptions(minTime=next_shots[-1].start)
+            cmds.playbackOptions(maxTime=next_shots[-1].stop)
+            cmds.currentTime(next_shots[-1].start)
 
     def focus_previous_at_time(self, time: int):
-        """Focus the previous bookmark."""
+        """
+        Focus the shot chronologically before the shot at a given time.
+        Args:
+            time (int): The time to get the shot at.
+
+        Returns:
+            None
+        """
         # Maya default function seems to work 1 / 2 times
         # timeSliderBookmark.framePreviousBookmarkAtCurrentTime()
 
@@ -196,11 +268,16 @@ class SequencerSequence:
             cmds.currentTime(previous_shots[-1].start)
 
     def offset_frame_of_shot_at_time(self, time: int, total: int = 1):
-        """Change the length of a shot and
+        """
+        Change the length of the shot at a given time and
         move the next shots to avoid overlaps.
 
         Args:
+            time (int): The time to get the shot at.
             total (int, optional): The number of frame to offset. Defaults to 1.
+
+        Returns:
+            None
         """
         active_shot = self.get_shots_at_time(time)[0]
         next_shots = self.get_next_shots_at_time(time)
@@ -209,7 +286,11 @@ class SequencerSequence:
             shot.move(total)
 
     def resolve_overlapping_shots(self):
-        """Move shots that are overlapping."""
+        """
+        Resolve overlapping shots by moving them to the future.
+        Returns:
+            None
+        """
         for i in range(1, len(self.shots)):
             prev_shot = self.shots[i - 1]
             curr_shot = self.shots[i]
@@ -221,7 +302,11 @@ class SequencerSequence:
         self.sort_shots()
 
     def resolve_gaps_between_shots(self):
-        """Move shots that are not connected."""
+        """
+        Resolve shots separated by time by moving them.
+        Returns:
+            None
+        """
         for i in range(0, len(self.shots) - 1):
             curr_shot = self.shots[i]
             next_shot = self.shots[i + 1]
@@ -232,8 +317,9 @@ class SequencerSequence:
 
         self.sort_shots()
 
-    def generate_shot_name(self) -> str | None:
-        """Generate a simple shot name.
+    def generate_shot_name(self) -> str:
+        """
+        Generate a simple shot name.
 
         Returns:
             str: The generated shot name.
@@ -254,53 +340,16 @@ class SequencerSequence:
         else:
             return f"{self.name}_SH0010"
 
-    def create_preview_viewport(self, label: str = "Preview Viewport") -> str:
-        """Create a new viewport dockable window.
-
-        Returns:
-            str: The name of the new model panel name (viewport)
-        """
-        dock_name = "PIK_" + label.title().replace(" ", "") + "Dock"
-
-        if cmds.workspaceControl(dock_name + "WorkspaceControl", exists=True):
-            cmds.workspaceControl(dock_name + "WorkspaceControl", edit=True, close=True)
-
-        workspace = cmds.workspaceControl(
-            dock_name + "WorkspaceControl",
-            label=label,
-            floating=True,
-            initialWidth=PREVIEW_VIEWPORT_SIZE[0],
-            initialHeight=PREVIEW_VIEWPORT_SIZE[1],
-            retain=False,
-        )
-
-        cmds.setParent(workspace)
-
-        cmds.paneLayout()
-        preview_panel = cmds.modelPanel()
-
-        # Enable shading, manage visibilities
-        cmds.modelEditor(
-            preview_panel,
-            edit=True,
-            displayAppearance="smoothShaded",
-            wireframeOnShaded=False,
-            grid=False,
-            nurbsCurves=False,
-            locators=False,
-            cameras=False,
-            joints=False,
-            imagePlane=False,
-            follicles=False,
-            displayTextures=True,
-        )
-
-        self.preview_viewport = preview_panel
-
-        return preview_panel
-
 
 def get_sequencer_sequence(reset=False):
+    """
+    Get the sequencer sequence instance.
+    Args:
+        reset (bool): If true, return a new :class:`SequencerSequence` instance.
+
+    Returns:
+        :class:`SequencerSequence`: A class instance.
+    """
     if not SequencerSequence.instance or reset:
         SequencerSequence.instance = SequencerSequence.load()
     return SequencerSequence.instance
