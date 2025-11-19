@@ -6,12 +6,15 @@ from maya import OpenMaya
 from maya.plugin.timeSliderBookmark import timeSliderBookmark
 
 from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
-from PIK_maya_anim_sequencer.scripts.constants import EXPORT_OVERSCAN, DEFAULT_OVERSCAN
+from PIK_maya_anim_sequencer.scripts.constants import (
+    EXPORT_OVERSCAN,
+    DEFAULT_OVERSCAN,
+    SHOT_TASK_TEMPLATE,
+)
 from PIK_maya_anim_sequencer.scripts.dependencies import valid_shot_name
 
 from quickBlast.settings import get_quickblast_folderpath
 from quickBlast.main import run as quickBlast
-
 
 
 class SequencerShot:
@@ -232,3 +235,29 @@ class SequencerShot:
             "stop": self.stop,
             "color": self.color,
         }
+
+    def as_csv(
+        self,
+        status: str = "wtg",
+        start_frame: int = 1001,
+        task_template: str = SHOT_TASK_TEMPLATE,
+    ):
+        """
+        Convert the shot into a CSV line for Shotgrid imports.
+        Format of the line will be : Sequence;Shot Code;Status;Cut In;Cut Out;Cut Duration;Task Template
+        Returns:
+            str: A CSV line of the shot.
+        """
+        sequence, shot = self.name.split("_")
+        shot_length = int(self.stop - self.start)
+        return ";".join(
+            [
+                sequence,
+                self.name,
+                status,
+                str(start_frame),
+                str(start_frame + shot_length),
+                str(shot_length),
+                task_template,
+            ]
+        )

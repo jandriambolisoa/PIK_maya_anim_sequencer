@@ -25,6 +25,7 @@ class Backend(QObject):
     """
     The backend object used in the QQuickWidget.
     """
+
     def __init__(self):
         super().__init__()
         self.dialog_create_shot = None
@@ -88,7 +89,9 @@ class Backend(QObject):
             OpenMaya.MGlobal.displayWarning("Sequencer: No active shot detected.")
             return
 
-        if show_confirmation_dialog(f"Do you want to delete current shot?\n{shot.name}"):
+        if show_confirmation_dialog(
+            f"Do you want to delete current shot?\n{shot.name}"
+        ):
             sequencer_sequence.delete_shot_at_time(current_time)
 
     @Slot()
@@ -250,7 +253,9 @@ class Backend(QObject):
         """
         sequencer_sequence = get_sequencer_sequence()
 
-        if show_confirmation_dialog("Do you want to export the current sequence datas ?\nThis will export a datas.json file and a .ma file for each camera."):
+        if show_confirmation_dialog(
+            "Do you want to export the current sequence datas ?\nThis will export a shots.csv file for shotgrid imports and a .ma file for each camera."
+        ):
             folder_path = cmds.fileDialog2(fileMode=2, dialogStyle=1, hideNameEdit=True)
 
             if folder_path:
@@ -258,11 +263,14 @@ class Backend(QObject):
 
                 datas = list()
                 for shot in sequencer_sequence.shots:
-                    datas.append(shot.as_dict())
+                    datas.append(shot.as_csv())
                     shot.export_camera(folder_path)
 
-                with open(os.path.join(folder_path, "datas.json"), "w") as file:
-                    json.dump(datas, file, indent=4)
+                with open(os.path.join(folder_path, "datas.csv"), "w") as file:
+                    file.write(
+                        "Sequence;Shot Code;Status;Cut In;Cut Out;Cut Duration;Task Template\n"
+                    )
+                    file.write("\n".join(datas))
 
             os.startfile(folder_path)
 
@@ -307,6 +315,7 @@ class DockableMainWindow(MayaQWidgetDockableMixin, QMainWindow):
     """
     The Sequencer main window object.
     """
+
     def __init__(self, qml_url: str, width: int, height: int, *args, **kwargs):
         super(DockableMainWindow, self).__init__(*args, **kwargs)
 
@@ -325,6 +334,7 @@ class DialogCreateShotWindow(QDialog):
     """
     The create shot dialog window object.
     """
+
     def __init__(self, qml_url: str, width: int, height: int, *args, **kwargs):
         super(DialogCreateShotWindow, self).__init__(*args, **kwargs)
 
@@ -436,9 +446,7 @@ def maya_dock_control_to_window(window: str, to_dock: str, position: str = "bott
         None
     """
     try:
-        control_to_dock = cmds.modelPanel(
-            to_dock, query=True, control=True
-        )
+        control_to_dock = cmds.modelPanel(to_dock, query=True, control=True)
         if control_to_dock:
             control_to_dock = control_to_dock.split("|")[0]
             cmds.workspaceControl(

@@ -8,6 +8,7 @@ from PIK_maya_anim_sequencer.scripts.constants import (
     DEFAULT_OVERSCAN,
 )
 
+
 class SequencerCamera:
     """
     A camera object in the sequencer tool.
@@ -69,7 +70,6 @@ class SequencerCamera:
             )
         else:
             return None
-
 
     def get_attr(self, attr: str) -> any:
         """

@@ -1,18 +1,29 @@
 from maya import cmds
 from maya import OpenMaya, OpenMayaAnim
 
-from PIK_maya_anim_sequencer.scripts.constants import PREVIEW_CAMERA_NAME, PREVIEW_VIEWPORT_SIZE
+from PIK_maya_anim_sequencer.scripts.constants import (
+    PREVIEW_CAMERA_NAME,
+    PREVIEW_VIEWPORT_SIZE,
+)
 from PIK_maya_anim_sequencer.ui.sequencer import run as sequencer_ui
-from PIK_maya_anim_sequencer.ui.windows import create_viewport, maya_dock_control_to_window
+from PIK_maya_anim_sequencer.ui.windows import (
+    create_viewport,
+    maya_dock_control_to_window,
+)
 
-from PIK_maya_anim_sequencer.scripts.sequence import SequencerSequence, get_sequencer_sequence
+from PIK_maya_anim_sequencer.scripts.sequence import (
+    SequencerSequence,
+    get_sequencer_sequence,
+)
 from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
 
 
 callbacks = list()
 
 
-def update_preview_viewport_camera(current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence):
+def update_preview_viewport_camera(
+    current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence
+):
     """
     Change the given Sequencer's Sequence viewport camera to the current shot camera.
     Args:
@@ -32,7 +43,9 @@ def update_preview_viewport_camera(current_time: OpenMaya.MTime, sequencer_seque
             shot.cam.set_as_camera_viewport(sequencer_sequence.preview_viewport)
 
 
-def update_shots_start_and_stop_datas(current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence):
+def update_shots_start_and_stop_datas(
+    current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence
+):
     """
     Update the shots of the given Sequencer Sequence.
     Args:
@@ -45,7 +58,7 @@ def update_shots_start_and_stop_datas(current_time: OpenMaya.MTime, sequencer_se
     # When dragging a bookmark in the time slider to change its length
     # or its time placement, Maya does not consider this as a
     # scrubbing action.
-    #sequencer_sequence = clientData
+    # sequencer_sequence = clientData
     if not OpenMayaAnim.MAnimControl.isScrubbing():
         sequencer_sequence.update_range_of_shots()
 
@@ -118,8 +131,7 @@ def run():
 
     sequencer_sequence = get_sequencer_sequence(reset=True)
     sequencer_sequence.preview_viewport = create_viewport(
-        label="Preview Viewport",
-        viewport_size=PREVIEW_VIEWPORT_SIZE
+        label="Preview Viewport", viewport_size=PREVIEW_VIEWPORT_SIZE
     )
     window = sequencer_ui()
 
@@ -143,7 +155,7 @@ def close_sequencer(window: str):
     """
     remove_callbacks()
 
-    #window = clientData
+    # window = clientData
     cmds.workspaceControl(window, edit=True, close=True)
 
     sequencer_sequence = get_sequencer_sequence()

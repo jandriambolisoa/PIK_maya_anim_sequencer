@@ -88,7 +88,6 @@ class SequencerSequence:
         active_shot.delete()
         del active_shot
 
-
     def get_previous_shots_at_time(self, time: int):
         """
         Get the shots before the given time.
