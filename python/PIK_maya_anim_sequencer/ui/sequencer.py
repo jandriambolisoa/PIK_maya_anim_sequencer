@@ -19,8 +19,8 @@ def run():
     """
     folderpath = os.path.dirname(__file__)
     qml_url = os.path.join(folderpath, "sequencer.qml")
-    width = 560
-    height = 120
+    width = 594
+    height = 135
 
     dock_window_name = "sequencerWindow"
 

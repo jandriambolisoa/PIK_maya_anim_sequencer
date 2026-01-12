@@ -191,14 +191,26 @@ class SequencerShot:
         Returns:
             None
         """
+        # Conform camera
         cmds.select(self.cam.transform, replace=True)
         self.cam.set_attr("overscan", EXPORT_OVERSCAN)
+
+        # Offset keyframes to have the animation starting at 1001
+        shot_length = self.stop - self.start
+        cmds.keyframe(self.cam.transform, relative=True, timeChange=-shot_length+1001)
+        cmds.keyframe(self.cam.shape, relative=True, timeChange=-shot_length+1001)
+
+        # Export
         cmds.file(
             os.path.join(folder_path, self.name + ".ma"),
             exportSelected=True,
             type="mayaAscii",
             force=True,
         )
+        # Offset keyframes back
+        cmds.keyframe(self.cam.transform, relative=True, timeChange=shot_length-1001)
+        cmds.keyframe(self.cam.shape, relative=True, timeChange=shot_length-1001)
+
         self.cam.set_attr("overscan", DEFAULT_OVERSCAN)
         if show_output:
             os.startfile(folder_path)

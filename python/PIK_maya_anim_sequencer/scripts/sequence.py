@@ -12,6 +12,8 @@ from PIK_maya_anim_sequencer.scripts.constants import (
     PREVIEW_VIEWPORT_SIZE,
 )
 
+from PIK_maya_anim_sequencer.scripts.dependencies import valid_sequence_name
+
 
 class SequencerSequence:
     """
@@ -25,6 +27,7 @@ class SequencerSequence:
         self.name = name
         self.shots = list()
         self.preview_viewport = None
+        self.auto_solo_cam = False
 
     @classmethod
     def load(cls):
@@ -120,6 +123,23 @@ class SequencerSequence:
 
         return shot_list
 
+    def rename(self, name: str) -> None:
+        """
+        Rename the given sequence and all its shots.
+        Args:
+            name (str): The name of the new sequence. Must be unique and in the format 'SQXXXX' where 'X' are digits.
+        """
+        name = valid_sequence_name(name)
+
+        if name == self.name:
+            return
+
+        self.name = name
+
+        for shot in self.shots:
+            seq, sh = shot.name.split("_")
+            shot.name = name + "_" + sh
+
     def update_range_of_shot_at_time(self, time: int) -> None:
         """
         Update the range of the shot at the given time.
@@ -148,6 +168,33 @@ class SequencerSequence:
             shot.start = cmds.getAttr(f"{shot.node}.timeRangeStart")
             shot.stop = cmds.getAttr(f"{shot.node}.timeRangeStop")
         self.sort_shots()
+
+    def solo_cameras_of_shots_at_time(self, time: int):
+        """
+        Hide the cameras (in the viewport) of the shots that are not at the given time.
+        Args:
+            time (int): The time to get the shots at.
+        """
+        for shot in self.shots:
+            if not shot.start <= time <= shot.stop:
+                shot.cam.hide()
+            else:
+                shot.cam.show()
+
+    def show_all_cameras(self):
+        """
+        Show the cameras (in the viewport) of all shots.
+        """
+        for shot in self.shots:
+            shot.cam.show()
+
+    def set_auto_solo_camera(self, value: bool) -> None:
+        """
+        Set auto solo camera. This option indicates that the user would like to automatically hide other shots cameras.
+        Args:
+            value (bool): True or False
+        """
+        self.auto_solo_cam = value
 
     @staticmethod
     def defocus():

@@ -189,6 +189,106 @@ class Backend(QObject):
         sequencer_sequence = get_sequencer_sequence()
         sequencer_sequence.resolve_overlapping_shots()
 
+    @Slot(bool)
+    def solo_current_shot_camera(self, toggle_value):
+        """
+        Hide or show other shots cameras.
+        Args:
+            toggle_value (bool): If True, other shots cameras will be hided.
+        """
+        sequencer_sequence = get_sequencer_sequence()
+
+        if toggle_value:
+            current_time = cmds.currentTime(query=True)
+            sequencer_sequence.solo_cameras_of_shots_at_time(current_time)
+        else:
+            sequencer_sequence.show_all_cameras()
+
+        sequencer_sequence.set_auto_solo_camera(toggle_value)
+
+    @Slot()
+    def playblast_active_shots(self):
+        """
+        Playblast active shots.
+        """
+        current_time = cmds.currentTime(query=True)
+        sequencer_sequence = get_sequencer_sequence()
+        active_shots = sequencer_sequence.get_shots_at_time(current_time)
+
+        if cmds.file(query=True, modified=True):
+            OpenMaya.MGlobal.displayError("Save your file before running playblasts.")
+            return
+
+        folder_path = get_quickblast_folderpath()
+
+        # Clear selection and set the preview viewport as active
+        cmds.select(clear=True)
+        cmds.modelEditor(
+            sequencer_sequence.preview_viewport, edit=True, activeView=True
+        )
+
+        # Get orig components visibility before hiding them
+        joints_vis = cmds.modelEditor(
+            sequencer_sequence.preview_viewport, query=True, joints=True
+        )
+        locators_vis = cmds.modelEditor(
+            sequencer_sequence.preview_viewport, query=True, locators=True
+        )
+        curves_vis = cmds.modelEditor(
+            sequencer_sequence.preview_viewport, query=True, nurbsCurves=True
+        )
+        cmds.modelEditor(sequencer_sequence.preview_viewport, edit=True, joints=False)
+        cmds.modelEditor(sequencer_sequence.preview_viewport, edit=True, locators=False)
+        cmds.modelEditor(
+            sequencer_sequence.preview_viewport, edit=True, nurbsCurves=False
+        )
+
+        for shot in active_shots:
+            shot.export_playblast()
+
+        # Set back orig components visibility
+        cmds.modelEditor(
+            sequencer_sequence.preview_viewport, edit=True, joints=joints_vis
+        )
+        cmds.modelEditor(
+            sequencer_sequence.preview_viewport, edit=True, locators=locators_vis
+        )
+        cmds.modelEditor(
+            sequencer_sequence.preview_viewport, edit=True, nurbsCurves=curves_vis
+        )
+
+        os.startfile(folder_path)
+
+    @Slot()
+    def export_active_shot_datas(self):
+        """
+        For each active shot, export the camera and a current_shots.csv file containing shots infos.
+        """
+        current_time = cmds.currentTime(query=True)
+        sequencer_sequence = get_sequencer_sequence()
+        active_shots = sequencer_sequence.get_shots_at_time(current_time)
+
+        if show_confirmation_dialog(
+                "Do you want to export the current shots datas ?\nThis will export a current_shots.csv file for shotgrid imports and a .ma file for each camera."
+        ):
+            folder_path = cmds.fileDialog2(fileMode=2, dialogStyle=1, hideNameEdit=True)
+
+            if folder_path:
+                folder_path = folder_path[0]
+
+                datas = list()
+                for shot in active_shots:
+                    datas.append(shot.as_csv())
+                    shot.export_camera(folder_path)
+
+                with open(os.path.join(folder_path, "current_shots.csv"), "w") as file:
+                    file.write(
+                        "Sequence;Shot Code;Status;Cut In;Cut Out;Cut Duration;Task Template\n"
+                    )
+                    file.write("\n".join(datas))
+
+            os.startfile(folder_path)
+
     @Slot()
     def playblast(self):
         """
@@ -247,9 +347,7 @@ class Backend(QObject):
     @Slot()
     def export_sequence_datas(self):
         """
-        For each shot of this sequence, export the camera and a datas.json file containing shots infos.
-        Returns:
-            None
+        For each shot of this sequence, export the camera and a shots.csv file containing shots infos.
         """
         sequencer_sequence = get_sequencer_sequence()
 

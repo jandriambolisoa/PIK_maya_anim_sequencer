@@ -19,3 +19,19 @@ def valid_shot_name(name: str) -> str:
         )
 
     return name
+
+def valid_sequence_name(name: str) -> str:
+    """
+    Return the sequence name if the given name is valid.
+    Args:
+        name (str): The name of the sequence.
+
+    Returns:
+        str: The sequence name.
+    """
+    if not name.startswith("SQ"):
+        raise ValueError("Invalid sequence name. Sequence must start with 'SQ'")
+    if not name[2:].isdigit():
+        raise ValueError("Unexpected characters. Sequence must be in the format 'SQXXXX' where 'X' are digits.")
+
+    return name

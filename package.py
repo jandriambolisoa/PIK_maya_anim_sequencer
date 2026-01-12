@@ -1,6 +1,6 @@
 name = "PIK_maya_anim_sequencer"
 
-version = "1.0.1"
+version = "1.1.0"
 
 authors = [
     "Jeremy Andriambolisoa",

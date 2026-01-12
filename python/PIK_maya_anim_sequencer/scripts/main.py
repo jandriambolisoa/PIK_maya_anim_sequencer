@@ -43,6 +43,12 @@ def update_preview_viewport_camera(
             shot.cam.set_as_camera_viewport(sequencer_sequence.preview_viewport)
 
 
+def update_sequencer_cameras_visibilities(
+    current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence
+):
+    if sequencer_sequence.auto_solo_cam:
+        sequencer_sequence.solo_cameras_of_shots_at_time(current_time.value())
+
 def update_shots_start_and_stop_datas(
     current_time: OpenMaya.MTime, sequencer_sequence: SequencerSequence
 ):
@@ -92,6 +98,11 @@ def setup_shot_length_updater(sequencer_sequence: SequencerSequence) -> int:
     )
     return callback_id
 
+def setup_sequencer_cameras_visibilities(sequencer_sequence: SequencerSequence) -> int:
+    callback_id = OpenMaya.MDGMessage.addTimeChangeCallback(
+        update_sequencer_cameras_visibilities, sequencer_sequence
+    )
+    return callback_id
 
 def setup_sequence_reset_if_scene_open(window: str) -> int:
     """
@@ -130,6 +141,7 @@ def run():
         remove_callbacks()
 
     sequencer_sequence = get_sequencer_sequence(reset=True)
+    sequencer_sequence.show_all_cameras()
     sequencer_sequence.preview_viewport = create_viewport(
         label="Preview Viewport", viewport_size=PREVIEW_VIEWPORT_SIZE
     )
@@ -140,6 +152,7 @@ def run():
     # Add callbacks
     callbacks.append(setup_preview_viewport(sequencer_sequence))
     callbacks.append(setup_shot_length_updater(sequencer_sequence))
+    callbacks.append(setup_sequencer_cameras_visibilities(sequencer_sequence))
     callbacks.append(setup_sequence_reset_if_scene_open(window))
     callbacks.append(setup_sequence_reset_if_new_scene(window))
 

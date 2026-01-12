@@ -154,6 +154,19 @@ class SequencerCamera:
         """
         cmds.modelEditor(panel, edit=True, camera=self.shape)
 
+    def hide(self):
+        """
+        Hide the camera in the viewport.
+        """
+        # Hide on the camera shape because the camera transform might have keyframes.
+        cmds.setAttr(self.shape + ".visibility", 0)
+
+    def show(self):
+        """
+        Show the camera in the viewport.
+        """
+        # Show on the camera shape because the camera transform might have keyframes.
+        cmds.setAttr(self.shape + ".visibility", 1)
 
 def get_all_cameras():
     """
