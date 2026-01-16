@@ -1,6 +1,6 @@
 name = "PIK_maya_anim_sequencer"
 
-version = "1.1.0"
+version = "1.1.1"
 
 authors = [
     "Jeremy Andriambolisoa",
@@ -14,7 +14,7 @@ description = \
 requires = [
     "python-3+",
     "maya-2026",
-    "PIK_maya_quickBlast-0.0.3"
+    "PIK_maya_quickBlast-0.0.4"
 ]
 
 uuid = "piktura.PIK_maya_anim_sequencer"
