@@ -8,7 +8,7 @@ from PIK_maya_anim_sequencer.ui.windows import DockableMainWindow, get_maya_main
 from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
 from PIK_maya_anim_sequencer.scripts.constants import PREVIEW_CAMERA_NAME
 
-from quickBlast.main import run as quickBlast
+# from quickBlast.main import run as quickBlast
 
 
 def run():

@@ -1,6 +1,6 @@
 name = "PIK_maya_anim_sequencer"
 
-version = "1.1.1"
+version = "1.1.1-r.1"
 
 authors = [
     "Jeremy Andriambolisoa",
@@ -8,13 +8,12 @@ authors = [
 
 description = \
     """
-    An alternative for the Maya's Camera Sequencer to create layout sequences.
+    An alternative for the Maya's Camera Sequencer to create layout sequences (standalone revision).
     """
 
 requires = [
     "python-3+",
-    "maya-2026",
-    "PIK_maya_quickBlast-0.0.4"
+    "maya-2026"
 ]
 
 uuid = "piktura.PIK_maya_anim_sequencer"
