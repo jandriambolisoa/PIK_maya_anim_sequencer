@@ -13,8 +13,8 @@ from PIK_maya_anim_sequencer.scripts.constants import (
 )
 from PIK_maya_anim_sequencer.scripts.dependencies import valid_shot_name
 
-from quickBlast.settings import get_quickblast_folderpath
-from quickBlast.main import run as quickBlast
+# from quickBlast.settings import get_quickblast_folderpath
+# from quickBlast.main import run as quickBlast
 
 
 class SequencerShot:
@@ -161,25 +161,31 @@ class SequencerShot:
         Returns:
             None
         """
-        orig_min_time_slider = cmds.playbackOptions(query=True, min=True)
-        orig_max_time_slider = cmds.playbackOptions(query=True, max=True)
+        # This revision excludes quickBlast, so we fall back to the default playblast dialog
+        OpenMaya.MGlobal.displayWarning("No quickBlast : a default playblast is run.")
+        cmds.playblast(options=True)
 
-        folder_path = get_quickblast_folderpath()
-        self.focus()
-        self.cam.set_attr("overscan", EXPORT_OVERSCAN)
-        self.cam.set_attr("displayResolution", 0)
-        cmds.file(modified=False)
-        quickBlast(
-            show_output=show_output,
-            custom_filepath=os.path.join(folder_path, f"{self.name}.mp4"),
-            show_popup_errors=show_popup_errors,
-        )
-        self.cam.set_attr("overscan", DEFAULT_OVERSCAN)
-        self.cam.set_attr("displayResolution", 1)
-
-        cmds.playbackOptions(
-            edit=True, min=orig_min_time_slider, max=orig_max_time_slider
-        )
+        # orig_min_time_slider = cmds.playbackOptions(query=True, min=True)
+        # orig_max_time_slider = cmds.playbackOptions(query=True, max=True)
+        #
+        # folder_path = get_quickblast_folderpath()
+        # self.focus()
+        # self.cam.set_attr("overscan", EXPORT_OVERSCAN)
+        # self.cam.set_attr("displayResolution", 0)
+        # cmds.file(modified=False)
+        # quickBlast(
+        #     show_output=show_output,
+        #     custom_filepath=os.path.join(folder_path, f"{self.name}.mp4"),
+        #     show_popup_errors=show_popup_errors,
+        # )
+        #
+        # # Ignore reset
+        # self.cam.set_attr("overscan", DEFAULT_OVERSCAN)
+        # self.cam.set_attr("displayResolution", 1)
+        #
+        # cmds.playbackOptions(
+        #     edit=True, min=orig_min_time_slider, max=orig_max_time_slider
+        # )
 
     def export_camera(self, folder_path: str, show_output=False):
         """

@@ -17,8 +17,8 @@ from shiboken6 import wrapInstance
 from PIK_maya_anim_sequencer.scripts.shots import SequencerShot
 from PIK_maya_anim_sequencer.scripts.cameras import SequencerCamera
 from PIK_maya_anim_sequencer.scripts.sequence import get_sequencer_sequence
-from quickBlast.settings import get_quickblast_folderpath
-from quickBlast.main import run as quickBlast
+# from quickBlast.settings import get_quickblast_folderpath
+# from quickBlast.main import run as quickBlast
 
 
 class Backend(QObject):
@@ -219,7 +219,10 @@ class Backend(QObject):
             OpenMaya.MGlobal.displayError("Save your file before running playblasts.")
             return
 
-        folder_path = get_quickblast_folderpath()
+        # folder_path = get_quickblast_folderpath()
+        folder_path = os.path.normpath(cmds.workspace(fullName=True))
+        folder = cmds.workspace(fileRuleEntry="movie")
+        folder_path = os.path.join(folder_path, folder)
 
         # Clear selection and set the preview viewport as active
         cmds.select(clear=True)
@@ -303,7 +306,10 @@ class Backend(QObject):
             return
 
         # Playblast shots individually with quickBlast
-        folder_path = get_quickblast_folderpath()
+        # folder_path = get_quickblast_folderpath()
+        folder_path = os.path.normpath(cmds.workspace(fullName=True))
+        folder = cmds.workspace(fileRuleEntry="movie")
+        folder_path = os.path.join(folder_path, folder)
         first_shot = True
 
         # Clear selection and set the preview viewport as active
