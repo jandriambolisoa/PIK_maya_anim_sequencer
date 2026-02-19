@@ -3,7 +3,6 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Controls.Fusion
-import "widgets" as Custom
 
 Page {
     id: sequencerWindow
@@ -33,240 +32,395 @@ Page {
     RowLayout {
         anchors.fill: parent
         anchors.margins: 6
-        
-        GridLayout {
-            columns: 2
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft
-            Layout.maximumWidth: 100
-        
-            Button {
-                id: createShotBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/plus.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
-                }
-                ToolTip.visible: hovered
-                ToolTip.text: "Create Shot"
-                onClicked: {
-                    createShotWidget.open()
-                }
+        Layout.fillHeight: true
+
+        ColumnLayout {
+            id: sequenceShotButtonsLayout
+            Layout.fillHeight: true
+
+            Label {
+                width: createShotWindow.width/2
+                text: "Sequence commands"
+                color: "white"
             }
 
-            Button {
-                id: deleteShotBtn
-                Layout.fillHeight: true
+            GridLayout {
+                columns: 6
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/trash.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
-                }
-                ToolTip.visible: hovered
-                ToolTip.text: "Delete shot"
-                onClicked: backend.delete_shot()
-            }
-
-            Button {
-                id: focusBtn
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/zoomin.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
-                }
-                ToolTip.visible: hovered
-                ToolTip.text: "Focus active shot"
-                onClicked: backend.focus_active_shot()
-            }
 
-            Button {
-                id: defocusBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/zoomout.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: createShotBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/plus.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Create Shot"
+                    onClicked: {
+                        backend.open_create_shot_dialog()
+                    }
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Overview sequence"
-                onClicked: backend.defocus_active_shot()
-            }
 
-            Button {
-                id: previousBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/arrowleft.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: deleteShotBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/trash.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Delete shot"
+                    onClicked: backend.delete_shot()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Focus previous shot"
-                onClicked: backend.focus_previous_shot()
-            }
 
-            Button {
-                id: nextBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/arrowright.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: focusBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/zoomin.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Focus active shot"
+                    onClicked: backend.focus_active_shot()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Focus next shot"
-                onClicked: backend.focus_next_shot()
-            }
 
-            Button {
-                id: removeFrameBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/arrowremove.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: defocusBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/zoomout.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Defocus"
+                    onClicked: backend.defocus_active_shot()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Reduce shot length"
-                onClicked: backend.reduce_active_shot_length()
-            }
 
-            Button {
-                id: addFrameBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/arrowadd.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: previousBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/arrowleft.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Focus previous shot"
+                    onClicked: backend.focus_previous_shot()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Increase shot length"
-                onClicked: backend.increase_active_shot_length()
-            }
 
-            Button {
-                id: linkShotsBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/link.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: nextBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/arrowright.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Focus next shot"
+                    onClicked: backend.focus_next_shot()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Fill gaps"
-                onClicked: backend.link_shots()
-            }
 
-            Button {
-                id: unlinkShotsBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/unlink.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: removeFrameBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/arrowremove.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Reduce shot length"
+                    onClicked: backend.reduce_active_shot_length()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Unstack shots"
-                onClicked: backend.unstack_shots()
-            }
 
-            Button {
-                id: playblastBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/play.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: addFrameBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/arrowadd.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Increase shot length"
+                    onClicked: backend.increase_active_shot_length()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Quickblast"
-                onClicked: backend.playblast()
-            }
 
-            Button {
-                id: exportBtn
-                Layout.fillHeight: true
-                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-                Layout.maximumHeight: buttonsSize
-                Layout.maximumWidth: buttonsSize
-                contentItem: Image {
-                    source: "icons/export.svg"
-                    fillMode: Image.PreserveAspectFit
-                    anchors.fill: parent
-                    anchors.margins: 6
+                Button {
+                    id: linkShotsBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/link.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Fill gaps"
+                    onClicked: backend.link_shots()
                 }
-                ToolTip.visible: hovered
-                ToolTip.text: "Export sequence datas"
-                onClicked: backend.export_sequence_datas()
-            }
 
+                Button {
+                    id: unlinkShotsBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/unlink.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Unstack shots"
+                    onClicked: backend.unstack_shots()
+                }
+
+                Button {
+                    id: playblastBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/play.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Quickblast"
+                    onClicked: backend.playblast()
+                }
+
+                Button {
+                    id: exportBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/export.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Export sequence datas"
+                    onClicked: backend.export_sequence_datas()
+                }
+            }
             Item {
-                id: fillerVertical
+                id: sequenceButtonsLayoutFiller
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
                 Layout.fillHeight: true
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignLeft
-                implicitWidth: 128
+            }
+        }
+
+        Rectangle {
+            color: "grey"
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.fillHeight: true
+            width: 1
+        }
+
+        ColumnLayout {
+            id: activeShotButtons
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            anchors.margins: 6
+
+            Label {
+                width: createShotWindow.width/2
+                text: "Active shot commands"
+                color: "white"
+            }
+
+            RowLayout {
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Layout.fillHeight: true
+
+                Button {
+                    id: soloCameraToggleBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    checkable: true
+                    contentItem: Image {
+                        source: "icons/solo.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Solo active camera"
+                    onToggled: {
+                        backend.solo_current_shot_camera(soloCameraToggleBtn.checked)
+                    }
+                }
+
+                // Button {
+                //     id: selectShotSelectionSetBtn
+                //     Layout.fillHeight: true
+                //     Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                //     Layout.minimumHeight: buttonsSize
+                //     Layout.minimumWidth: buttonsSize
+                //     Layout.maximumHeight: buttonsSize
+                //     Layout.maximumWidth: buttonsSize
+                //     contentItem: Image {
+                //         source: "icons/setselect.svg"
+                //         fillMode: Image.PreserveAspectFit
+                //         anchors.fill: parent
+                //         anchors.margins: 6
+                //     }
+                //     ToolTip.visible: hovered
+                //     ToolTip.text: "Select Shot Set"
+                //     onClicked: {
+                //         backend.temp_test()
+                //     }
+                // }
+                //
+                // Button {
+                //     id: addSelectionToShotSelectionSetBtn
+                //     Layout.fillHeight: true
+                //     Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                //     Layout.minimumHeight: buttonsSize
+                //     Layout.minimumWidth: buttonsSize
+                //     Layout.maximumHeight: buttonsSize
+                //     Layout.maximumWidth: buttonsSize
+                //     contentItem: Image {
+                //         source: "icons/setadd.svg"
+                //         fillMode: Image.PreserveAspectFit
+                //         anchors.fill: parent
+                //         anchors.margins: 6
+                //     }
+                //     ToolTip.visible: hovered
+                //     ToolTip.text: "Add Selection to Shot Set"
+                //     onClicked: {
+                //         backend.temp_test()
+                //     }
+                // }
+
+                Button {
+                    id: playblastActiveShotBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/play.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Quickblast Active Shot"
+                    onClicked: {
+                        backend.playblast_active_shots()
+                    }
+                }
+
+                Button {
+                    id: exportActiveShotToCSVBtn
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                    Layout.minimumHeight: buttonsSize
+                    Layout.minimumWidth: buttonsSize
+                    Layout.maximumHeight: buttonsSize
+                    Layout.maximumWidth: buttonsSize
+                    contentItem: Image {
+                        source: "icons/export.svg"
+                        fillMode: Image.PreserveAspectFit
+                        anchors.fill: parent
+                        anchors.margins: 6
+                    }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Export Shot Datas"
+                    onClicked: {
+                        backend.export_active_shot_datas()
+                    }
+                }
             }
         }
         Item {
-            id: fillerHorizontal
-            Layout.fillHeight: true
+            id: sequencerLayoutFiller
+            Layout.alignment: Qt.AlignLeft | Qt.AlignTop
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignLeft
         }
-    }
-
-    Custom.CreateShot {
-        id: createShotWidget
-        x: (parent.width/2)-(createShotWidget.width/2)
-        y: (parent.height/2)-(createShotWidget.height/2)
-        implicitWidth: parent.width * 0.88
-        implicitHeight: parent.height * 0.88
     }
 }

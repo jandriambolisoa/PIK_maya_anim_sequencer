@@ -1,135 +1,180 @@
 from maya import cmds
 
+from PIK_maya_anim_sequencer.scripts.constants import (
+    PREVIEW_VIEWPORT_SIZE,
+    DEFAULT_FAR_CLIP,
+    DEFAULT_NEAR_CLIP,
+    DEFAULT_GATEMASK_COLOR,
+    DEFAULT_OVERSCAN,
+)
 
-from PIK_maya_anim_sequencer.scripts.constants import PREVIEW_CAMERA_NAME
-from PIK_maya_anim_sequencer.scripts.constants import PREVIEW_VIEWPORT_SIZE
 
-
-def create_sequencer_camera(
-    camera_name: str, preview_camera: bool = False
-) -> list[str]:
-    """Create a camera designed for the sequencer tool.
-    The camera will be created as a copy of the persp
-    cam.
-
-    Args:
-        camera_name (str): The name of the created camera.
-        preview_camera (bool, optional): If true, create an invisble camera with 'currentCam' attribute. Defaults to False.
-
-    Returns:
-        list[str]: Camera transform and shape name.
+class SequencerCamera:
     """
-    # Create a camera and get the shape name.
-    camera = cmds.camera(n=camera_name)
-    camera_transform, camera_shape = camera
-    camera_transform = cmds.rename(camera_transform, camera_name, ignoreShape=True)
+    A camera object in the sequencer tool.
+    """
 
-    if preview_camera:
-        # If this is a preview camera, we want to hide it and
-        # make sure the user is not able to select it
-        cmds.setAttr(f"{camera_transform}.visibility", 0)
-        cmds.setAttr(f"{camera_transform}.overrideEnabled", 1)
-        cmds.setAttr(f"{camera_transform}.overrideDisplayType", 2)
-        cmds.addAttr(camera_transform, longName="currentCam", dataType="string")
-    else:
-        # Detect the active working camera (default to persp)
-        # and match its position, rotation and focal length.
-        active_camera = "persp"
-        for viewport in cmds.getPanel(type="modelPanel"):
-            is_active = cmds.modelEditor(viewport, query=True, activeView=True)
+    def __init__(self, transform: str, shape: str):
+        self.transform = transform
+        self.shape = shape
 
-            if is_active:
-                active_camera = cmds.modelEditor(viewport, query=True, camera=True)
-                break
+    @classmethod
+    def create(cls, name: str):
+        """
+        Create a sequencer camera.
+        Args:
+            name (str): The name of the camera
 
-        cmds.matchTransform(camera_transform, active_camera, pos=True, rot=True)
+        Returns:
+            :class:`SequencerCamera`: A class instance.
+        """
+        if cls.get(name):
+            raise RuntimeError(f"Camera {name} already exists")
 
-        active_camera_shape = cmds.listRelatives(active_camera, shapes=True)[0]
-        active_camera_focal = cmds.getAttr(f"{active_camera_shape}.focalLength")
-        cmds.setAttr(f"{camera_shape}.focalLength", active_camera_focal)
+        # Create a camera and rename it properly
+        transform, _ = cmds.camera()
+        transform = cmds.rename(transform, name)
+        shape = cmds.listRelatives(transform, shapes=True)[0]
 
-    # Standard camera settings
-    cmds.setAttr(f"{camera_shape}.displayGateMaskColor", 0.0, 0.0, 0.0)
-    cmds.setAttr(f"{camera_shape}.displayGateMaskOpacity", 1.0)
+        # Setup camera default attributes
+        cmds.setAttr(
+            f"{shape}.displayGateMaskColor",
+            DEFAULT_GATEMASK_COLOR,
+            DEFAULT_GATEMASK_COLOR,
+            DEFAULT_GATEMASK_COLOR,
+        )
+        cmds.setAttr(f"{shape}.displayGateMaskOpacity", 1.0)
+        cmds.setAttr(f"{shape}.displayResolution", 1)
+        cmds.setAttr(f"{shape}.overscan", DEFAULT_OVERSCAN)
+        cmds.setAttr(f"{shape}.nearClipPlane", DEFAULT_NEAR_CLIP)
+        cmds.setAttr(f"{shape}.farClipPlane", DEFAULT_FAR_CLIP)
 
-    return [camera_transform, camera_shape]
+        return cls(transform, shape)
 
+    @classmethod
+    def get(cls, transform_name: str):
+        """
+        Get a camera from its transform name.
+        Args:
+            transform_name (str): the name of the camera transform
 
-def get_all_cameras() -> list[str]:
-    """Returns all cameras transforms names.
+        Returns:
+            :class:`SequencerCamera`: A class instance.
+        """
+        camera_shape = cmds.ls(transform_name + "|*", type="camera", l=True)
 
+        if camera_shape:
+            return cls(
+                transform=cmds.listRelatives(camera_shape[0], parent=True, f=True)[0],
+                shape=camera_shape[0],
+            )
+        else:
+            return None
+
+    def get_attr(self, attr: str) -> any:
+        """
+        Return the value of a camera's attribute.
+        This function will look for a shape's attribute, if not existing,
+        it will look for a transform's attribute.
+        Args:
+            attr (str): the name of the attribute
+
+        Returns:
+            any: the value of the attribute or None if the attribute isn't found.
+        """
+        shape_attr = cmds.listAttr(self.shape)
+        transform_attr = cmds.listAttr(self.transform)
+        if attr in shape_attr:
+            return cmds.getAttr(self.shape + "." + attr)
+        elif attr in transform_attr:
+            return cmds.getAttr(self.transform + "." + attr)
+        else:
+            return None
+
+    def set_attr(self, attr: str, value) -> None:
+        """
+        Set the value of a camera's attribute if it exists.
+        Args:
+            attr (str): the name of the attribute
+            value (any): the value of the attribute
+
+        Returns:
+            None
+        """
+        shape_attr = cmds.listAttr(self.shape)
+        transform_attr = cmds.listAttr(self.transform)
+        if attr in shape_attr:
+            cmds.setAttr(self.shape + "." + attr, value)
+        elif attr in transform_attr:
+            cmds.setAttr(self.transform + "." + attr, value)
+
+    def move(self, offset: int) -> None:
+        """
+        Move the camera in time
+        Args:
+            offset (int): The amount of time unit to move.
+
+        Returns:
+            None
+        """
+        cmds.keyframe(self.transform, relative=True, timeChange=int(offset))
+
+    def snap_to_another_camera(self, camera_to_snap_to: str = "persp") -> None:
+        """
+        Snap camera to another camera (including position, rotation, focal length and DOF attributes).
+        Args:
+            camera_to_snap_to (str): A camera transform name
+
+        Returns:
+            None
+        """
+        camera_to_snap_to = self.get(camera_to_snap_to)
+
+        # Snap pos and rot, focal and DOF
+        cmds.matchTransform(
+            self.transform, camera_to_snap_to.transform, pos=True, rot=True
+        )
+
+        self.set_attr("focalLength", camera_to_snap_to.get_attr("focalLength"))
+        self.set_attr("depthOfField", camera_to_snap_to.get_attr("depthOfField"))
+        self.set_attr("focusDistance", camera_to_snap_to.get_attr("focusDistance"))
+        self.set_attr("fStop", camera_to_snap_to.get_attr("fStop"))
+        self.set_attr(
+            "focusRegionScale", camera_to_snap_to.get_attr("focusRegionScale")
+        )
+
+    def set_as_camera_viewport(self, panel: str) -> None:
+        """
+        Set this camera as the viewport's camera.
+        Args:
+            panel (str): The model panel (viewport) to edit
+
+        Returns:
+            None
+        """
+        cmds.modelEditor(panel, edit=True, camera=self.shape)
+
+    def hide(self):
+        """
+        Hide the camera in the viewport.
+        """
+        # Hide on the camera shape because the camera transform might have keyframes.
+        cmds.setAttr(self.shape + ".visibility", 0)
+
+    def show(self):
+        """
+        Show the camera in the viewport.
+        """
+        # Show on the camera shape because the camera transform might have keyframes.
+        cmds.setAttr(self.shape + ".visibility", 1)
+
+def get_all_cameras():
+    """
+    Return all cameras as a list of SequencerCamera objects
     Returns:
-        list[str]: Cameras transform names
+        list[:class:`SequencerCamera`] : List of class instances for all the cameras in the scene.
     """
     return [
-        cmds.listRelatives(shape, parent=True)[0] for shape in cmds.ls(cameras=True)
+        SequencerCamera.get(cmds.listRelatives(shape, parent=True)[0])
+        for shape in cmds.ls(cameras=True)
     ]
-
-
-def get_preview_camera(camera_name: str = PREVIEW_CAMERA_NAME) -> list[str]:
-    """Get the preview camera of the current scene.
-    If the preview camera does not exist, it will be created.
-
-    Args:
-        camera_name (str, optional): Name of the preview camera. Defaults to PREVIEW_CAMERA_NAME.
-
-    Returns:
-        list[str]: Camera transform and shape name.
-    """
-    if camera_name not in get_all_cameras():
-        return create_sequencer_camera(camera_name, preview_camera=True)
-    else:
-        return [camera_name, cmds.listRelatives(camera_name, shapes=True)[0]]
-
-
-def create_preview_viewport() -> str:
-    """Create a new viewport dockable window that will show the preview camera view.
-
-    Returns:
-        str: The full path name to the workspaceControl
-    """
-    preview_camera = get_preview_camera()
-    dock_name = "PIK_previewViewportDock"
-
-    workspace = cmds.workspaceControl(
-        dock_name + "WorkspaceControl",
-        label="Preview Viewport",
-        floating=True,
-        initialWidth=PREVIEW_VIEWPORT_SIZE[0],
-        initialHeight=PREVIEW_VIEWPORT_SIZE[1],
-        retain=False,
-    )
-
-    cmds.setParent(workspace)
-
-    cmds.paneLayout()
-    preview_panel = cmds.modelPanel(camera=preview_camera[1])
-
-    # Enable shading, manage visibilities
-    cmds.modelEditor(
-        preview_panel,
-        edit=True,
-        displayAppearance="smoothShaded",
-        wireframeOnShaded=False,
-        grid=False,
-        nurbsCurves=False,
-        locators=False,
-        cameras=False,
-        joints=False,
-        imagePlane=False,
-        follicles=False,
-    )
-
-    return workspace
-
-
-def generate_camera_name(shot_name: str) -> str:
-    """Returns a generated camera name from a shot name.
-
-    Args:
-        shot_name (str): The shot name
-
-    Returns:
-        str: The generated camera name.
-    """
-    return f"{shot_name}"

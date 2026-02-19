@@ -4,15 +4,10 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Controls.Fusion
 
-Dialog {
+Page {
     id: createShotWindow
 
     property real styleColumnHeight: 32
-
-    onAccepted: {
-        shotNameInput.text = backend.get_shot_name()
-        cameraInput.text = backend.get_camera_name(shotNameInput.text)
-    }
 
     ColumnLayout {
         id: mainLayout
@@ -39,6 +34,7 @@ Dialog {
                 Layout.rightMargin: 12
                 implicitHeight: styleColumnHeight
                 placeholderText: "SQ0000_SH0000"
+                text: backend.get_shot_name()
                 onEditingFinished: {
                     cameraInput.text = backend.get_camera_name(shotNameInput.text)
                 }
@@ -90,7 +86,8 @@ Dialog {
                 Layout.fillWidth: true
                 Layout.rightMargin: 12
                 implicitHeight: styleColumnHeight
-                placeholderText: "CAM_SQ0000_SH0000"
+                placeholderText: "SQ0000_SH0000"
+                text: backend.get_camera_name(shotNameInput.text)
             }
         }
 
@@ -106,11 +103,11 @@ Dialog {
             text: "Create shot"
             onClicked: {
                 backend.do_create_shot(shotNameInput.text, colorInput.selectedColor, shotLengthInput.value, cameraInput.text)
-                cameraInput.selectAll()
-                cameraInput.remove(cameraInput.selectionStart, cameraInput.selectionEnd)
-                shotNameInput.selectAll()
-                shotNameInput.remove(shotNameInput.selectionStart, shotNameInput.selectionEnd)
-                createShotWindow.accept()
+                // cameraInput.selectAll()
+                // cameraInput.remove(cameraInput.selectionStart, cameraInput.selectionEnd)
+                // shotNameInput.selectAll()
+                // shotNameInput.remove(shotNameInput.selectionStart, shotNameInput.selectionEnd)
+                backend.close_create_shot_dialog()
             }
         }
 
